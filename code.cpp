@@ -14,7 +14,7 @@ extern uint8_t NUMIMAGES;
 /*
    readSignature
 
-   @breif: Note that the highest signature byte is the same over all AVRs so we skip it
+   @brief Note that the highest signature byte is the same over all AVRs so we skip it
    @return uint16_t: read the bottom two signature bytes (if possible) and return them
 */
 uint16_t readSignature (void) {
@@ -35,7 +35,7 @@ uint16_t readSignature (void) {
 /*
    findImage
 
-   @breif: given 'signature' loaded with the relevant part of the device signature,
+   @brief: given 'signature' loaded with the relevant part of the device signature,
            search the hex images that we have programmed in flash, looking for one
            that matches.
    @param uint16_t signature: Signature of the chip
@@ -64,7 +64,7 @@ image_t *findImage (uint16_t signature) {
 /*
    programmingFuses
 
-   @breif: Program the fuse/lock bits
+   @brief: Program the fuse/lock bits
    @param const byte* fuses: Array consisting of the fuse bytes
    @return boolean: Alaways true
 */
@@ -108,7 +108,7 @@ boolean programFuses (const byte *fuses) {
 /*
    verifyFuses
 
-   Verifies a fuse set
+   @brief Verifies a fuse set
    @param const byte* fuses: Array containing the fuses to program
    @param const byte* fusemask: Byte array of the fusemasks
    @return boolean: True if fuses are verfied
@@ -182,7 +182,7 @@ const byte* readNextOctet(const byte* p, boolean as_hex, byte& b) {
 /*
    readImagePage
 
-   Read a page of intel hex image from a string in pgm memory.
+   @brief Read a page of intel hex image from a string in pgm memory.
    @param const byte* hex: Pointer to a byte array to store the read bytes.
    @param boolean as_hex:
    @param uint16_t pageaddr: The page address to read from.
@@ -294,7 +294,14 @@ const byte* readImagePage(const byte* hex, boolean as_hex, uint16_t pageaddr, ui
   return hex;
 }
 
-// Send one byte to the page buffer on the chip
+/**
+ *  flashWord
+ *
+ *  @brief Send one byte to the page buffer on the chip.
+ *  @param uint8_t hilo: 
+ *  @param uint16_t addr:
+ *  @param uint8_t data:
+ */
 void flashWord (uint8_t hilo, uint16_t addr, uint8_t data) {
 #if (VERBOSE)
   Serial.print(data, HEX);  Serial.print(':');
@@ -305,20 +312,17 @@ void flashWord (uint8_t hilo, uint16_t addr, uint8_t data) {
 #endif
 }
 
-// Basically, write the pagebuff (with pagesize bytes in it) into
-// page $pageaddr
+// Basically, write the pagebuff (with pagesize bytes in it) into page $pageaddr
 boolean flashPage (byte *pagebuff, uint16_t pageaddr, uint8_t pagesize) {
   SPI.setClockDivider(CLOCKSPEED_FLASH);
 
   Serial.print(F("Flashing page ")); Serial.println(pageaddr, HEX);
   for (uint16_t i = 0; i < pagesize / 2; i++) {
-
 #if (VERBOSE)
     Serial.print(pagebuff[2 * i], HEX); Serial.print(' ');
     Serial.print(pagebuff[2 * i + 1], HEX); Serial.print(' ');
     if ( i % 16 == 15) Serial.println();
 #endif
-
     flashWord(LOW, i, pagebuff[2 * i]);
     flashWord(HIGH, i, pagebuff[2 * i + 1]);
   }
@@ -326,8 +330,7 @@ boolean flashPage (byte *pagebuff, uint16_t pageaddr, uint8_t pagesize) {
   // page addr is in bytes, byt we need to convert to words (/2)
   pageaddr = (pageaddr / 2) & 0xFFC0;
 
-  uint16_t commitreply = spi_transaction(0x4C, (pageaddr >> 8) & 0xFF,
-                                         pageaddr & 0xFF, 0);
+  uint16_t commitreply = spi_transaction(0x4C, (pageaddr >> 8) & 0xFF, pageaddr & 0xFF, 0);
 
   Serial.print(F("  Commit Page: 0x"));  Serial.print(pageaddr, HEX);
   Serial.print(F(" -> 0x")); Serial.println(commitreply, HEX);
@@ -336,10 +339,14 @@ boolean flashPage (byte *pagebuff, uint16_t pageaddr, uint8_t pagesize) {
   return true;
 }
 
-// verifyImage does a byte-by-byte verify of the flash hex against the chip.
-// Thankfully this does not have to be done by pages!
-// returns true if the image is the same as the hextext.
-// returns false on any error.
+/**
+ *  verifyImage 
+ *  
+ *  @breif does a byte-by-byte verify of the flash hex against the chip.Thankfully this does not have to be done by pages!
+ *  @param const byte* hex: Pointer to the hex image.
+ *  @param boolean as_hex: Read image as hex text.
+ *  @return boolean: true if the image is the same as the hex text. Returns false on any error.
+ */
 boolean verifyImage(const byte* hex, boolean as_hex) {
   uint8_t len;
   byte b, cksum = 0;
@@ -427,14 +434,22 @@ boolean verifyImage(const byte* hex, boolean as_hex) {
   return true;
 }
 
-// Send the erase command, then busy wait until the chip is erased
+/**
+ *  eraseChip
+ *  
+ *  @breif Send the erase command, then busy wait until the chip is erased
+ */
 void eraseChip(void) {
   SPI.setClockDivider(CLOCKSPEED_FUSES);
   spi_transaction(0xAC, 0x80, 0, 0);    // chip erase
   busyWait();
 }
 
-// Simply polls the chip until it is not busy any more - for erasing and programming
+/**
+ *  busyWait
+ *  
+ *  @breif Simply polls the chip until it is not busy any more - for erasing and programming
+ */
 void busyWait(void) {
   byte busybit;
   do {
